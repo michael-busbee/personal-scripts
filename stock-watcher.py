@@ -11,16 +11,6 @@ from datetime import datetime, timedelta
 load_dotenv(dotenv_path='.env')
 
 def analyze_stock(stock):
-    """
-    For the given stock symbol, download historical data,
-    calculate the 50-day and 200-day moving averages, and check for
-    a crossover within the most recent 10 days.
-    
-    Returns:
-        "Buy" if 50-day MA crosses above 200-day MA,
-        "Sell" if 50-day MA crosses below 200-day MA,
-        None if no crossover is detected or not enough data.
-    """
     try:
         # Download roughly one year of historical data.
         data = yf.download(stock, period="1y", progress=False)
@@ -99,7 +89,6 @@ def send_email(buys, sells, sender, receiver, smtp_server, smtp_port, login, pas
         print(f"Failed to send email: {e}")
 
 def main():
-    # Step 1: Read stock symbols from external file "stocks.txt"
     try:
         with open("stocks.txt", "r") as f:
             stocks = [line.strip() for line in f if line.strip() != ""]
@@ -110,7 +99,6 @@ def main():
     buy_list = []
     sell_list = []
 
-    # Step 2 & 3: Analyze each stock individually.
     for stock in stocks:
         print(f"Analyzing {stock}...")
         signal = analyze_stock(stock)
@@ -119,7 +107,7 @@ def main():
         elif signal == "Sell":
             sell_list.append(stock)
 
-    # Step 8: Send the list of Buy and Sell signals via email.
+
     # NOTE: Update the following email settings with your actual values.
     sender = os.getenv("GOOGLE_ACCOUNT")
     receiver = os.getenv("GOOGLE_ACCOUNT")
@@ -131,7 +119,6 @@ def main():
     send_email(buy_list, sell_list, sender, receiver, smtp_server, smtp_port, login, password)
 
 if __name__ == "__main__":
-    # Step 9: Run continuously and perform analysis once per day.
     # This loop will wait until a target time each day (e.g., 6:00 PM) to run.
     target_hour = 18   # 6 PM (24-hour clock)
     target_minute = 0  # 0 minutes
