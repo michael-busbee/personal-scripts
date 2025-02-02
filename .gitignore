@@ -1,2 +1,4 @@
 .env
 stocks.txt
+stock-checker.py
+email-sender.py

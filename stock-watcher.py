@@ -27,8 +27,6 @@ def analyze_stock(stock):
     data['MA50'] = data['Close'].rolling(window=50).mean()
     data['MA200'] = data['Close'].rolling(window=200).mean()
 
-    # Remove rows where the moving averages are NaN and then take the last 10 days.
-    data = data.dropna(subset=['MA50', 'MA200'])
     last10 = data.tail(10)
     
     if len(last10) < 2:
