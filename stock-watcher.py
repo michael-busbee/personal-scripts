@@ -203,7 +203,9 @@ def generate_html_email(buy_list, sell_list, detailed_signals):
     Builds a responsive, inline CSS HTML email body that includes:
       - Aggregated recommendations for likely buys and sells.
       - A detailed table showing, for each stock, the technique (and its signal) that yielded a recommendation.
+      - Educational links to learn more about each technique.
     """
+    # Add styles for the techniques section
     html = f"""\
 <html>
   <head>
@@ -224,7 +226,7 @@ def generate_html_email(buy_list, sell_list, detailed_signals):
         border-radius: 10px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       }}
-      h1, h2 {{
+      h1, h2, h3 {{
         color: #333333;
       }}
       table {{
@@ -241,10 +243,33 @@ def generate_html_email(buy_list, sell_list, detailed_signals):
         background-color: #f2f2f2;
       }}
       .buy-signal {{
-        background-color: #e6ffe6;  /* Soft green */
+        background-color: #e6ffe6;
       }}
       .sell-signal {{
-        background-color: #ffe6e6;  /* Soft red */
+        background-color: #ffe6e6;
+      }}
+      .techniques-section {{
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #eee;
+      }}
+      .technique-links {{
+        list-style: none;
+        padding: 0;
+      }}
+      .technique-links li {{
+        margin: 10px 0;
+      }}
+      .technique-links a {{
+        color: #2b6cb0;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }}
+      .technique-links a:hover {{
+        background-color: #f0f7ff;
+        text-decoration: underline;
       }}
       @media only screen and (max-width: 600px) {{
         .container {{
@@ -279,14 +304,70 @@ def generate_html_email(buy_list, sell_list, detailed_signals):
     for stock, signals in detailed_signals.items():
         for technique, signal in signals:
             signal_class = "buy-signal" if signal == "Buy" else "sell-signal"
-            html += f'<tr><td>{stock}</td><td>{technique}</td><td class="{signal_class}">{signal}</td></tr>'
+            html += f"<tr><td>{stock}</td><td>{technique}</td><td class=\"{signal_class}\">{signal}</td></tr>"
+    
+    # Add the techniques section with Investopedia links
     html += """\
       </table>
+      
+      <div class="techniques-section">
+        <h3>Learn More About These Techniques</h3>
+        <ul class="technique-links">
+          <li>
+            <a href="https://www.investopedia.com/terms/m/movingaverage.asp" target="_blank">
+              Moving Average Crossover (50/200 MA)
+            </a>
+          </li>
+          <li>
+            <a href="https://www.investopedia.com/terms/r/rsi.asp" target="_blank">
+              Relative Strength Index (RSI)
+            </a>
+          </li>
+          <li>
+            <a href="https://www.investopedia.com/terms/m/macd.asp" target="_blank">
+              Moving Average Convergence Divergence (MACD)
+            </a>
+          </li>
+          <li>
+            <a href="https://www.investopedia.com/terms/b/bollingerbands.asp" target="_blank">
+              Bollinger Bands
+            </a>
+          </li>
+          <li>
+            <a href="https://www.investopedia.com/terms/s/stochasticoscillator.asp" target="_blank">
+              Stochastic Oscillator
+            </a>
+          </li>
+          <li>
+            <a href="https://www.investopedia.com/terms/c/commoditychannelindex.asp" target="_blank">
+              Commodity Channel Index (CCI)
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
   </body>
 </html>
 """
     return html
+
+def generate_stock_list_with_logos(stock_list):
+    """
+    Generates HTML for a list of stocks with their logos.
+    """
+    if not stock_list:
+        return "None"
+    
+    html_list = []
+    for stock in stock_list:
+        logo_url = get_company_logo(stock)
+        html_list.append(f'''
+            <div class="stock-cell">
+                <img src="{logo_url}" class="stock-logo" onerror="this.style.display='none'" alt="{stock}"/>
+                {stock}
+            </div>
+        ''')
+    return "<br>".join(html_list)
 
 def send_email(sender, receiver, smtp_server, smtp_port, login, password, html_body):
     """
