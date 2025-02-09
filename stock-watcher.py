@@ -1,12 +1,10 @@
 import os
 from dotenv import load_dotenv
 import yfinance as yf
-import pandas as pd
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import time
-from datetime import datetime, timedelta
+
 
 load_dotenv(dotenv_path='.env')
 
@@ -114,23 +112,8 @@ def main():
     login = os.getenv("GOOGLE_ACCOUNT")
     app_password = os.getenv("GOOGLE_APP_PASSWORD")
 
-    send_email(buy_list, sell_list, sender, receiver, smtp_server, smtp_port, login, password)
+    send_email(buy_list, sell_list, sender, receiver, smtp_server, smtp_port, login, app_password)
+
 
 if __name__ == "__main__":
-    # This loop will wait until a target time each day (e.g., 6:00 PM) to run.
-    target_hour = 18   # 6 PM (24-hour clock)
-    target_minute = 0  # 0 minutes
-
-    while True:
-        now = datetime.now()
-        # Create today's target datetime.
-        target_time = now.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
-        
-        # If the target time today has already passed, schedule for tomorrow.
-        if now >= target_time:
-            target_time += timedelta(days=1)
-
-        sleep_seconds = (target_time - now).total_seconds()
-        print(f"Waiting {int(sleep_seconds)} seconds until next analysis at {target_time.strftime('%Y-%m-%d %H:%M:%S')}...")
-        time.sleep(sleep_seconds)
-        main()
+    main()
