@@ -21,15 +21,15 @@ def run_scripts():
         # Change to scripts directory
         os.chdir('/root/personal-scripts')
         
-        # Run stock-watcher
-        logging.info("Running stock-watcher.py")
-        subprocess.run(['/usr/bin/python3', 'stock-watcher.py'], check=True)
-        logging.info("Completed stock-watcher.py")
+        # Run stock_report.py
+        logging.info("Running stock_report.py")
+        subprocess.run(['/usr/bin/python3', 'stock_report.py'], check=True)
+        logging.info("Completed stock_report.py")
         
-        # Run county_report
-        logging.info("Running county_report.py")
-        subprocess.run(['/usr/bin/python3', 'county_report.py'], check=True)
-        logging.info("Completed county_report.py")
+        # Run local_report
+        logging.info("Running local_report.py")
+        subprocess.run(['/usr/bin/python3', 'local_report.py'], check=True)
+        logging.info("Completed local_report.py")
         
         logging.info("All scripts completed successfully")
         

@@ -198,100 +198,181 @@ def technique_cci(stock, data):
     
     return None
 
-def generate_html_email(buy_list, sell_list, detailed_signals):
+def calculate_stop_loss(data, signal_type="Sell", risk_percentage=2):
     """
-    Builds a responsive, inline CSS HTML email body that includes:
-      - Aggregated recommendations for likely buys and sells.
-      - A detailed table showing, for each stock, the technique (and its signal) that yielded a recommendation.
-      - Educational links to learn more about each technique.
+    Calculate price targets:
+    - For Sell signals: Stop loss 2% below current price
+    - For Buy signals: Suggested limit buy 1% below current price
     """
-    # Add styles for the techniques section
-    html = f"""\
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      body {{
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f4f4f4;
-      }}
-      .container {{
-        width: 90%;
-        max-width: 600px;
-        margin: auto;
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      }}
-      h1, h2, h3 {{
-        color: #333333;
-      }}
-      table {{
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-      }}
-      th, td {{
-        border: 1px solid #dddddd;
-        padding: 8px;
-        text-align: left;
-      }}
-      th {{
-        background-color: #f2f2f2;
-      }}
-      .buy-signal {{
-        background-color: #e6ffe6;
-      }}
-      .sell-signal {{
-        background-color: #ffe6e6;
-      }}
-      .techniques-section {{
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 2px solid #eee;
-      }}
-      .technique-links {{
-        list-style: none;
-        padding: 0;
-      }}
-      .technique-links li {{
-        margin: 10px 0;
-      }}
-      .technique-links a {{
-        color: #2b6cb0;
-        text-decoration: none;
-        padding: 5px 10px;
-        border-radius: 4px;
-        transition: background-color 0.2s;
-      }}
-      .technique-links a:hover {{
-        background-color: #f0f7ff;
-        text-decoration: underline;
-      }}
-      @media only screen and (max-width: 600px) {{
-        .container {{
-          width: 100%;
-          padding: 10px;
-        }}
-      }}
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Daily Stock Signals</h1>
+    try:
+        current_price = float(data["Close"].iloc[-1].iloc[0])
+        
+        if signal_type == "Sell":
+            # Stop loss should be below current price for sells
+            stop_loss = current_price * (1 - risk_percentage/100)
+            return {
+                'current_price': current_price,
+                'stop_loss': stop_loss,
+            }
+        else:  # Buy signal
+            limit_buy = current_price * 0.99  # Limit order 1% below current price
+            return {
+                'current_price': current_price,
+                'limit_buy': limit_buy
+            }
+    except Exception as e:
+        print(f"Error calculating price levels: {e}")
+        return None
+
+def generate_html_email(buy_list, sell_list, detailed_signals, price_levels):
+    """
+    Enhanced HTML email with price levels and order suggestions
+    """
+    css_styles = """
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #333333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .buy-signal {
+            background-color: #e6ffe6;
+        }
+        .sell-signal {
+            background-color: #ffe6e6;
+        }
+        .techniques-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .technique-links {
+            list-style: none;
+            padding: 0;
+        }
+        .technique-links li {
+            margin: 10px 0;
+        }
+        .technique-links a {
+            color: #2b6cb0;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .technique-links a:hover {
+            background-color: #f0f7ff;
+            text-decoration: underline;
+        }
+        .recommendations table {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .recommendations ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .recommendations li {
+            margin: 2px 0;
+        }
+        .buy-section, .sell-section {
+            margin-bottom: 30px;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+        }
+    """
+
+    html = f"""
+    <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <style>
+                {css_styles}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Daily Stock Signals</h1>
+    """
+    
+    html += f"""
       <h2>Aggregated Recommendations</h2>
-      <table>
-        <tr>
-          <th>Likely Buys</th>
-          <th>Likely Sells</th>
-        </tr>
-        <tr>
-          <td class="buy-signal">{"<br>".join(buy_list) if buy_list else "None"}</td>
-          <td class="sell-signal">{"<br>".join(sell_list) if sell_list else "None"}</td>
-        </tr>
+      <div class="recommendations">
+        <div class="buy-section">
+          <h3>Likely Buys</h3>
+          <table>
+            <tr>
+              <th>Stock</th>
+              <th>Current Price</th>
+              <th>Limit Buy</th>
+            </tr>
+    """
+    
+    for stock in buy_list:
+        levels = price_levels.get(stock, {})
+        if levels:
+            html += f"""
+                <tr>
+                    <td>{stock}</td>
+                    <td>${levels['current_price']:.2f}</td>
+                    <td>${levels['limit_buy']:.2f}</td>
+                </tr>
+            """
+    
+    html += """
+        </table>
+        </div>
+        <div class="sell-section">
+          <h3>Likely Sells</h3>
+          <table>
+            <tr>
+              <th>Stock</th>
+              <th>Current Price</th>
+              <th>Stop Loss</th>
+            </tr>
+    """
+    
+    for stock in sell_list:
+        levels = price_levels.get(stock, {})
+        if levels:
+            html += f"""
+                <tr>
+                    <td>{stock}</td>
+                    <td>${levels['current_price']:.2f}</td>
+                    <td>${levels['stop_loss']:.2f}</td>
+                </tr>
+            """
+
+    html += """
       </table>
       <h2>Signals by Technique</h2>
       <table>
@@ -401,9 +482,9 @@ def main():
 
     aggregated_buys = []
     aggregated_sells = []
-    detailed_signals = {}  # Format: {stock: [(technique, signal), ...]}
+    detailed_signals = {}
+    price_levels = {}  # Store price targets for each stock
 
-    # Process each stock by downloading its data and running each analysis technique.
     for stock in stocks:
         print(f"Analyzing {stock}...")
         data = get_stock_data(stock)
@@ -443,23 +524,26 @@ def main():
         
         if signals:
             detailed_signals[stock] = signals
-
-            # Aggregate signals: if more Buy signals than Sell then mark as a likely buy, and vice versa.
             buy_count = sum(1 for _, sig in signals if sig == "Buy")
             sell_count = sum(1 for _, sig in signals if sig == "Sell")
+            
             if buy_count > sell_count:
                 aggregated_buys.append(stock)
+                # Calculate buy-side price levels
+                price_levels[stock] = calculate_stop_loss(data, "Buy")
             elif sell_count > buy_count:
                 aggregated_sells.append(stock)
+                # Calculate sell-side price levels
+                price_levels[stock] = calculate_stop_loss(data, "Sell")
 
-    html_body = generate_html_email(aggregated_buys, aggregated_sells, detailed_signals)
+    html_body = generate_html_email(aggregated_buys, aggregated_sells, detailed_signals, price_levels)
 
     # Email settings (update/verify these in your .env file before running)
-    sender = os.getenv("GOOGLE_ACCOUNT")
-    receiver = os.getenv("GOOGLE_ACCOUNT")
+    sender = os.getenv("GMAIL_SENDER")
+    receiver = os.getenv("GMAIL_RECEIVER")
     smtp_server = "smtp.gmail.com"  # For Gmail SMTP
     smtp_port = 587  # Use port 587 with TLS
-    login = os.getenv("GOOGLE_ACCOUNT")
+    login = os.getenv("GMAIL_SENDER")
     app_password = os.getenv("GOOGLE_APP_PASSWORD")
 
     send_email(sender, receiver, smtp_server, smtp_port, login, app_password, html_body)

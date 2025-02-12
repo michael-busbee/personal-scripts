@@ -144,21 +144,27 @@ def generate_html_email_report(county_data):
 """
     return html
 
-def send_email(sender, receiver, smtp_server, smtp_port, login, password, html_body):
-    """
-    Composes and sends an HTML-formatted email.
-    """
+def send_email(html_content: str) -> None:
+    """Send email report"""
+    sender = os.getenv("GMAIL_SENDER")
+    receiver = os.getenv("GMAIL_RECEIVER")
+    app_password = os.getenv("GOOGLE_APP_PASSWORD")
+
+    if not all([sender, receiver, app_password]):
+        logger.error("Email credentials not configured")
+        return
+
     subject = "County Information Report"
     msg = MIMEMultipart("alternative")
     msg["From"] = sender
     msg["To"] = receiver
     msg["Subject"] = subject
-    msg.attach(MIMEText(html_body, "html"))
+    msg.attach(MIMEText(html_content, "html"))
 
     try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
+        server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
-        server.login(login, password)
+        server.login(sender, app_password)
         server.sendmail(sender, receiver, msg.as_string())
         server.quit()
         print("Email sent successfully.")
@@ -184,15 +190,7 @@ def main():
 
     html_body = generate_html_email_report(county_data)
 
-    # Email settings (update .env with correct credentials)
-    sender = os.getenv("GOOGLE_ACCOUNT")
-    receiver = os.getenv("GOOGLE_ACCOUNT")
-    smtp_server = "smtp.gmail.com"  # For Gmail SMTP
-    smtp_port = 587  # Use port 587 with TLS
-    login = os.getenv("GOOGLE_ACCOUNT")
-    app_password = os.getenv("GOOGLE_APP_PASSWORD")
-
-    send_email(sender, receiver, smtp_server, smtp_port, login, app_password, html_body)
+    send_email(html_body)
 
 if __name__ == "__main__":
     main() 
