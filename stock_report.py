@@ -6,7 +6,17 @@ import yfinance as yf
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import logging
 
+# Create logs directory if it doesn't exist
+os.makedirs('logs', exist_ok=True)
+
+# Set up logging
+logging.basicConfig(
+    filename='logs/stock_report.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 load_dotenv(dotenv_path='.env')
 
@@ -17,11 +27,11 @@ def get_stock_data(stock):
     try:
         data = yf.download(stock, period="1y", progress=False)
         if data.empty:
-            print(f"No data found for {stock}.")
+            logging.warning(f"No data found for {stock}.")
             return None
         return data
     except Exception as e:
-        print(f"Error downloading data for {stock}: {e}")
+        logging.error(f"Error downloading data for {stock}: {e}")
         return None
 
 def technique_ma_crossover(stock, data):
@@ -221,7 +231,7 @@ def calculate_stop_loss(data, signal_type="Sell", risk_percentage=2):
                 'limit_buy': limit_buy
             }
     except Exception as e:
-        print(f"Error calculating price levels: {e}")
+        logging.error(f"Error calculating price levels: {e}")
         return None
 
 def generate_html_email(buy_list, sell_list, detailed_signals, price_levels):

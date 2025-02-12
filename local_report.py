@@ -5,9 +5,20 @@ from dotenv import load_dotenv
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import logging
 
 # Load email credentials from .env file
 load_dotenv(dotenv_path='.env')
+
+# Create logs directory if it doesn't exist
+os.makedirs('logs', exist_ok=True)
+
+# Set up logging
+logging.basicConfig(
+    filename='logs/local_report.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 def scrape_county_info(county):
     """
@@ -37,9 +48,9 @@ def scrape_county_info(county):
                     summary = item.find('p').get_text(strip=True) if item.find('p') else "No Summary"
                     results.append((title, summary))
             else:
-                print(f"Failed to retrieve data from {url} (Status code: {response.status_code})")
+                logging.error(f"Failed to retrieve data from {url} (Status code: {response.status_code})")
         except Exception as e:
-            print(f"Error scraping {county} info: {e}")
+            logging.error(f"Error scraping {county} info: {e}")
 
     # If scraping returns no results, use placeholder/dummy data.
     if not results:

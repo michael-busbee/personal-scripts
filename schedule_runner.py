@@ -8,7 +8,7 @@ import os
 
 # Set up logging
 logging.basicConfig(
-    filename='/root/personal-scripts/scheduler.log',
+    filename='logs/scheduler.log',
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
@@ -18,8 +18,12 @@ def run_scripts():
     try:
         logging.info("Starting scripts execution")
         
-        # Change to scripts directory
-        os.chdir('/root/personal-scripts')
+        # Create logs directory if it doesn't exist
+        os.makedirs('logs', exist_ok=True)
+        
+        # Change to scripts directory (using relative path)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(script_dir)
         
         # Run stock_report.py
         logging.info("Running stock_report.py")
